@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Collections Recovery — Executive Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a; --card:#ffffff; --ink:#0f172a; --sub:#64748b;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706; --blue:#2563eb;
+    --line:#e2e8f0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#f1f5f9; color:var(--ink);
+  }
+  .wrap{max-width:1280px;margin:0 auto;padding:28px 32px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .sub{color:var(--sub);font-size:13px;}
+  .verdict{
+    background:linear-gradient(135deg,#7f1d1d,#dc2626); color:#fff; border-radius:14px;
+    padding:20px 26px; margin-bottom:22px; display:flex; align-items:center; gap:22px;
+  }
+  .verdict .big{font-size:34px; font-weight:800; line-height:1;}
+  .verdict .label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; opacity:.85; margin-bottom:4px;}
+  .verdict .desc{font-size:14px; opacity:.95; max-width:560px;}
+  .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;}
+  .kpi{background:var(--card); border-radius:12px; padding:16px 18px; border:1px solid var(--line);}
+  .kpi .label{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .kpi .val{font-size:24px;font-weight:700;}
+  .kpi .trend{font-size:12px;margin-top:4px;font-weight:600;}
+  .flat{color:var(--sub);} .down{color:var(--red);} .up{color:var(--green);}
+  .row{display:grid; grid-template-columns:1.4fr 1fr; gap:16px; margin-bottom:16px;}
+  .panel{background:var(--card); border-radius:12px; padding:18px 20px; border:1px solid var(--line);}
+  .panel h3{margin:0 0 4px; font-size:14px;}
+  .panel .note{color:var(--sub); font-size:12px; margin-bottom:10px;}
+  canvas{max-height:260px;}
+  .metrictable{width:100%; border-collapse:collapse; font-size:13px;}
+  .metrictable th{text-align:left; color:var(--sub); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line); font-size:11px; text-transform:uppercase;}
+  .metrictable td{padding:7px 8px; border-bottom:1px solid #f1f5f9;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.flat{background:#f1f5f9;color:#475569;}
+  .reco{background:#0f172a;color:#fff;border-radius:12px;padding:20px 24px;}
+  .reco h3{margin:0 0 8px;font-size:15px;}
+  .reco .figs{display:flex; gap:24px; margin-top:14px; flex-wrap:wrap;}
+  .reco .fig{min-width:130px;}
+  .reco .fig .n{font-size:20px;font-weight:700;}
+  .reco .fig .l{font-size:11px;color:#94a3b8;text-transform:uppercase;}
+  footer{color:var(--sub); font-size:11px; margin-top:18px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Collections Recovery — Executive View</h1>
+      <div class="sub">7 full months (Jan–Jul 2026) · Golden dataset · Updated for this assignment</div>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <div>
+      <div class="label">Is the reported +11% MoM improvement real?</div>
+      <div class="big">NO — it's one noisy month, not a trend</div>
+    </div>
+    <div class="desc">Jan→Jul net recovery is flat to slightly down (−2.1%). The "11%" matches exactly the single Feb→Mar move; every other independent metric (contact rate, RPC, PTP rate, conversion rate) is flat across the full period.</div>
+  </div>
+
+  <div class="grid">
+    <div class="kpi"><div class="label">Net recovery, Jan→Jul</div><div class="val">−2.1%</div><div class="trend flat">Flat / slightly down</div></div>
+    <div class="kpi"><div class="label">Contact rate</div><div class="val">~20%</div><div class="trend flat">Flat all 7 months</div></div>
+    <div class="kpi"><div class="label">Conversion rate (paid/targeted)</div><div class="val">~41%</div><div class="trend flat">Flat, 40.4–42.7% band</div></div>
+    <div class="kpi"><div class="label">Duplicate payment rows removed</div><div class="val">500</div><div class="trend flat">Exact-duplicate ingestion</div></div>
+  </div>
+
+  <div class="row">
+    <div class="panel">
+      <h3>Monthly Recovery — Reported (naive) vs. Golden</h3>
+      <div class="note">Golden = duplicates removed + reversals netted in their own month. Same shape, ~8% lower level.</div>
+      <canvas id="recoveryChart"></canvas>
+    </div>
+    <div class="panel">
+      <h3>Month-over-Month % Change</h3>
+      <div class="note">The +11% cited by leadership is the single Feb→Mar bar — not representative of the year.</div>
+      <canvas id="momChart"></canvas>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="panel">
+      <h3>Independent Metrics — All Flat</h3>
+      <div class="note">Every metric tested independently confirms no trend.</div>
+      <table class="metrictable">
+        <tr><th>Metric</th><th>Jan '26</th><th>Jul '26</th><th>Verdict</th></tr>
+        <tr><td>Contact rate</td><td>20.1%</td><td>19.4%</td><td><span class="badge flat">Flat</span></td></tr>
+        <tr><td>RPC rate</td><td>77.2%</td><td>77.7%</td><td><span class="badge flat">Flat</span></td></tr>
+        <tr><td>PTP rate</td><td>23.2%</td><td>21.6%</td><td><span class="badge flat">Flat</span></td></tr>
+        <tr><td>PTP kept rate</td><td>24.1%</td><td>24.6%</td><td><span class="badge flat">Flat</span></td></tr>
+        <tr><td>Conversion rate (paid/targeted)</td><td>41.4%</td><td>41.2%</td><td><span class="badge flat">Flat</span></td></tr>
+        <tr><td>Recovery / agent-hour</td><td>₹15,731</td><td>₹15,382</td><td><span class="badge flat">Flat</span></td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Contact Rate by Vendor</h3>
+      <div class="note">No vendor meaningfully outperforms — 19.2%–21.1% range across all 15 vendors.</div>
+      <canvas id="vendorChart"></canvas>
+    </div>
+  </div>
+
+  <div class="reco">
+    <h3>₹10 Cr Recommendation: AI Voice Automation (piloted first)</h3>
+    <div style="font-size:13px;color:#cbd5e1;max-width:820px;">Contact rate (~20%) is the largest funnel drop-off and is uniform across vendor, calling hour, and attempt number — the human-calling channel has hit a ceiling that operational tweaks don't move. AI voice can expand attempt coverage at a fraction of agent-hour cost. Confidence is medium-low: this dataset has no existing AI-voice channel to calibrate against, so the recommendation includes a mandatory 90-day pilot.</div>
+    <div class="figs">
+      <div class="fig"><div class="n">₹8–14 Cr/yr</div><div class="l">Incremental recovery (range)</div></div>
+      <div class="fig"><div class="n">9–15 mo</div><div class="l">Breakeven range</div></div>
+      <div class="fig"><div class="n">₹1.5–2 Cr</div><div class="l">Recommended pilot spend first</div></div>
+      <div class="fig"><div class="n">Medium-Low</div><div class="l">Confidence</div></div>
+    </div>
+  </div>
+
+  <footer>Golden dataset · 17 source tables, ~600K raw rows · Full methodology in Data Quality Report & Analysis Notebook</footer>
+</div>
+
+<script>
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+const naive = [19.11,17.41,19.32,17.84,18.70,17.87,19.03]; // Rs Cr
+const golden = [17.56,15.87,17.45,16.18,17.16,16.26,17.20];
+const naiveMom = [null,-8.9,11.0,-7.7,4.8,-4.5,6.5];
+const goldenMom = [null,-9.6,10.0,-7.3,6.0,-5.2,5.8];
+const vendors = ['V14','V06','V10','V13','V11','V03','V15','V08','V02','V05','V01','V12','V04','V09','V07'];
+const vendorRates = [21.1,20.5,20.4,20.4,20.2,19.9,19.8,19.8,19.7,19.6,19.6,19.6,19.3,19.3,19.2];
+
+new Chart(document.getElementById('recoveryChart'), {
+  type:'line',
+  data:{labels:months, datasets:[
+    {label:'Naive (reported-style)', data:naive, borderColor:'#dc2626', backgroundColor:'transparent', tension:.3},
+    {label:'Golden (cleaned)', data:golden, borderColor:'#2563eb', backgroundColor:'transparent', tension:.3},
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}}, scales:{y:{title:{display:true,text:'₹ Cr'}}}}
+});
+
+new Chart(document.getElementById('momChart'), {
+  type:'bar',
+  data:{labels:months, datasets:[
+    {label:'Naive MoM %', data:naiveMom, backgroundColor:'#f87171'},
+    {label:'Golden MoM %', data:goldenMom, backgroundColor:'#60a5fa'},
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}}}
+});
+
+new Chart(document.getElementById('vendorChart'), {
+  type:'bar',
+  data:{labels:vendors, datasets:[{label:'Contact rate %', data:vendorRates, backgroundColor:'#0ea5e9'}]},
+  options:{responsive:true, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{min:15,max:23}}}
+});
+</script>
+</body>
+</html>
